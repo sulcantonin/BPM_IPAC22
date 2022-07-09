@@ -19,10 +19,10 @@ Two issues shown in the paper.
 
 ### SASE1 undulator server crashed after an unusual selection of colours for individual cells (2022-03-07 20:45:00)
 
-(https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/undulator.png)
+![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/undulator.png)
 [zip](public_data/undulator.zip).
 ### A phase shifter at SASE3 does not move (2022-04-25 21:23:42)
-(https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/phase_shifter.png)
+![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/phase_shifter.png)
 [zip](public_data/phase_shifter.zip)
 
 # Model
