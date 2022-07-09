@@ -6,6 +6,9 @@ Interpretation of data from beam position monitors is a crucial part of the reli
 # Paper
 - [paper](https://ipac2022.vrws.de/papers/mopopt069.pdf) 
 - [poster](https://github.com/sulcantonin/BPM_IPAC22/blob/main/MOPOPT069_poster.pdf)
+- [code](model/code.py)
+- [torch sase13](model14_sa13_10iter_dropout0.1/model_009.torch) 
+- [torch sase2](model14_sa2_10iter_dropout0.1/model_009.torch)
 
 # Data
 
@@ -15,19 +18,18 @@ The files are compressed into pickles with gzip package with 8-bit float preciss
 Two issues shown in the paper. 
 
 ### SASE1 undulator server crashed after an unusual selection of colours for individual cells (2022-03-07 20:45:00)
+
+(https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/undulator.png)
 [zip](public_data/undulator.zip).
 ### A phase shifter at SASE3 does not move (2022-04-25 21:23:42)
-# Source files
+(https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/phase_shifter.png)
 [zip](public_data/phase_shifter.zip)
 
 # Model
 To understand how to read data, check ```get_X_from_file``` in ```model.py```. The function loads a list of files and normalizes it at the same time. 
 
-The model requires following libraries
+The model requires following libraries:
 - pytorch '1.10.2+cu113'
 - numpy '1.20.3'
 - pandas tbd
-## Model Source Code 
-[code](model/code.py)
-## Model Trained Weights
-[folder sase 1,3](model14_sa13_10iter_dropout0.1/) [folder sase 2](model14_sa2_10iter_dropout0.1/)
+
