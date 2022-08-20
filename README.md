@@ -33,5 +33,5 @@ To understand how to read data, check ```get_X_from_file``` in ```model.py```. T
 The model requires following libraries:
 - pytorch '1.10.2+cu113'
 - numpy '1.20.3'
-- pandas tbd
+- pandas '1.3.1'
 
