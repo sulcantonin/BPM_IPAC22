@@ -58,7 +58,8 @@ class TransformerModelTorch(nn.Module):
         self.dropout2 = nn.Dropout(dropout_p)
         self.output = nn.Linear(n_in,latent_dim)
         # self.pe = PositionalEncoding(n_in, dropout = dropout_p, max_len = max_len)
-        self.c = nn.Parameter(torch.randn(latent_dim), requires_grad = True)
+        # self.c = nn.Parameter(torch.randn(latent_dim), requires_grad = True) # 2022/08/20 fix -> this shouldn't be updatable parameter, because otherwise, the biases of transformer mutually converge to c = b 
+        self.c = torch.randn(latent_dim, requires_grad = False) # 2022/08/20 fix -> this shouldn't be updatable parameter, because otherwise, the biases of transformer mutually converge to c = b 
         
     
     def hidden_fro_norm(self):
