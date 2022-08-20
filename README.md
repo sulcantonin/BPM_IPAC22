@@ -3,7 +3,7 @@
 
 Interpretation of data from beam position monitors is a crucial part of the reliable operation of European XFEL. The interpretation of beam positions is often handled by a physical model, which can be prone to modeling errors or can lead to the high complexity of the computational model. In this paper, we show two data-driven approaches that provide insights into the operation of the SASE beamlines at European XFEL. We handle the analysis as a data-driven problem, separate it from physical peculiarities and experiment with available data based only on our empirical evidence and the data.
 
-Note: To provent collapse of the hypersphere center in paper we used early stopping
+Note: To provent collapse of the hypersphere center in paper we used early stopping. As we mention in the paper, c isn't kept fixed and is updated through the optimisation, batching should cause slight variation of the c and prevent collapse. 
 
 # Paper
 - [paper](https://ipac2022.vrws.de/papers/mopopt069.pdf) 
