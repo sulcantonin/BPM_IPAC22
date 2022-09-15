@@ -7,54 +7,6 @@ import numpy as np
 import math
 from tqdm import tqdm
 
-# 
-# Attention 
-# 
-class AttentionModule(nn.Module):
-    def __init__(self, D, D_qk, D_v, dropout_p = 0.0):
-        super(AttentionModule, self).__init__()
-
-        self.phi_q = nn.Linear(D,D_qk, bias = False)
-        self.phi_k = nn.Linear(D,D_qk, bias = False)
-        self.phi_v = nn.Linear(D,D_v, bias = False)
-        self.dropout1 = nn.Dropout(dropout_p)
-        self.dropout2 = nn.Dropout(dropout_p)
-        self.dq_sqrt_inv = np.sqrt(float(D_qk))
-        
-    def self_attention(self, x):
-        return F.softmax(self.dq_sqrt_inv * self.phi_q(x) @ self.phi_k(x).T, dim = -1)
-        
-    
-    def forward(self,x):
-        return self.self_attention(x) @ (self.phi_v(x))
-
-class TransformerLayer(nn.Module):
-    def __init__(self, n_in, n_out, D_qk, D_v, bias = False):
-        super(TransformerLayer, self).__init__()
-        self.attention = AttentionModule(n_in,D_qk, D_v)
-        self.layer_norm1 = nn.LayerNorm(n_in)
-        self.linear = nn.Linear(n_in, n_out, bias = bias)
-        self.layer_norm2 = nn.LayerNorm(n_in)
-    def forward(self, X):
-        return self.layer_norm2(X + self.linear(self.layer_norm1(X + self.attention(X))))
-    
-class TransformerModel(nn.Module):
-    def __init__(self, n_in, D_qk, latent_dim, dropout_p = 0.0):
-        super().__init__()
-        self.layer1 = TransformerLayer(n_in, n_in, D_qk, n_in, bias = False)
-        self.layer2 = TransformerLayer(n_in, n_in, D_qk, n_in, bias = False)
-        self.dropout1 = nn.Dropout(dropout_p)
-        self.dropout2 = nn.Dropout(dropout_p)
-        self.output = nn.Linear(n_in, latent_dim, bias = False)
-        self.c = torch.randn(latent_dim)
-    
-    def phi(self, x):
-        return self.output(self.dropout2(self.layer2(self.dropout1(self.layer1(x)))))
-    
-    def forward(self, x):
-        y = self.phi(x)
-        return torch.sqrt(torch.sum((y - self.c) ** 2,-1))
-    
 class PositionalEncoding(nn.Module):
 
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
@@ -63,11 +15,11 @@ class PositionalEncoding(nn.Module):
 
         position = torch.arange(max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-        pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term)
-        pe[:, 0, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe)
-        self.layer_norm = nn.LayerNorm(d_model)
+        self.pe = torch.zeros((max_len, d_model),requires_grad = False)
+        self.pe[:, 0::2] = torch.sin(position * div_term)
+        self.pe[:, 1::2] = torch.cos(position * div_term)
+        # self.register_buffer('pe', pe)
+        self.layer_norm = nn.LayerNorm(d_model, elementwise_affine = False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -89,72 +41,84 @@ class PositionalEncoding(nn.Module):
         x = x.unsqueeze(1)
         x = x + self.pe[:x.size(0)]
         '''
-        
-        # x = torch.cat((x,self.pe[:x.size(0)]),-1)
-        x = x + self.layer_norm(self.pe[:x.size(0)])
+        pe = self.layer_norm(self.pe[:x.size(0),:]) * x.std()
+        x = x + pe
         return self.dropout(x)
 
     
-    
-class TransformerModelTorch(nn.Module):
-    def __init__(self, n_in, latent_dim, nhead = 1, dropout_p = 0.0, max_len = 600):
-        super(TransformerModelTorch, self).__init__()
-        self.layer1 = nn.TransformerEncoderLayer(d_model = n_in, nhead = nhead, dim_feedforward = n_in, dropout = dropout_p)
-        self.layer2 = nn.TransformerEncoderLayer(d_model = n_in, nhead = nhead, dim_feedforward = n_in, dropout = dropout_p)
-        self.dropout1 = nn.Dropout(dropout_p)
-        self.dropout2 = nn.Dropout(dropout_p)
-        self.output = nn.Linear(n_in,latent_dim, bias = False)
-        # self.pe = PositionalEncoding(n_in, dropout = dropout_p, max_len = max_len)
-        self.c = torch.randn(latent_dim, requires_grad = False)
-        
-    
-    def hidden_fro_norm(self):
-        norm = []
-        for name, param in self.named_parameters():
-            if name.endswith('weight'):
-                norm.append(torch.linalg.matrix_norm(param.view((-1,1))))
-        return torch.stack(norm).mean()
-    
-    def phi(self, x):
-        if x.dim() == 2: # !TODO dirty hack
-            x = x.unsqueeze(1)
-        assert x.dim() == 3
-        # x = self.pe(x)
-        return self.output(self.dropout2(self.layer2(self.dropout1(self.layer1(x)))))
-    
-    def forward(self, x):
-        phi = self.phi(x)
-        return torch.sqrt(torch.sum((phi - self.c) ** 2,-1))
+# 
+# Attention 
+# 
+class AttentionModule(nn.Module):
+    def __init__(self, D, D_qk, D_v, dropout_p = 0.0):
+        super(AttentionModule, self).__init__()
 
-class LinearModelTorch(nn.Module):
-    def __init__(self, n_in, latent_dim, dropout_p = 0.0, bias = False):
-        super(LinearModelTorch, self).__init__()
-        dim_feedforward = n_in
-        self.layer1 = nn.Linear(n_in, dim_feedforward, bias = bias)
-        self.layer2 = nn.Linear(n_in, dim_feedforward, bias = bias)
+        self.phi_q = nn.Linear(D,D_qk, bias = False) # the attention is just matrix multiplication, no bias
+        self.phi_k = nn.Linear(D,D_qk, bias = False) # the same here
+        self.phi_v = nn.Linear(D,D_v, bias = False)
         self.dropout1 = nn.Dropout(dropout_p)
         self.dropout2 = nn.Dropout(dropout_p)
-        self.output = nn.Linear(n_in, latent_dim, bias = bias)
-        self.c = torch.randn(latent_dim, requires_grad = False)
+        self.dq_sqrt_inv = np.sqrt(float(D_qk))
         
+    def self_attention(self, x):
+        return F.softmax(self.dq_sqrt_inv * self.phi_q(x) @ self.phi_k(x).T, dim = 0)
     
-    def hidden_fro_norm(self):
-        norm = []
-        for name, param in self.named_parameters():
-            if name.endswith('weight'):
-                norm.append(torch.linalg.matrix_norm(param.view((-1,1))))
-        return torch.stack(norm).mean()
-    
-    def phi(self, x):
-        if x.dim() == 2: # !TODO dirty hack
-            x = x.unsqueeze(1)
-        assert x.dim() == 3
-        return self.output(self.dropout2(self.layer2(self.dropout1(self.layer1(x)))))
-    
+    def forward(self,x):
+        return self.self_attention(x) @ (self.phi_v(x))
+
+class TransformerLayer(nn.Module):
+    def __init__(self, n_in, n_out, D_qk, D_v, bias = False):
+        super(TransformerLayer, self).__init__()
+        self.n_in = n_in
+        self.self_attn = AttentionModule(n_in,D_qk, D_v)
+        self.layer_norm1 = nn.LayerNorm(n_in, elementwise_affine = False)
+        self.linear = nn.Linear(n_in, n_out, bias = bias)
+        self.layer_norm2 = nn.LayerNorm(n_in, elementwise_affine = False)
+
     def forward(self, x):
-        phi = self.phi(x)
-        return torch.sqrt(torch.sum((phi - self.c) ** 2,-1))
-    
+        # based on the eq. 8 in https://www.borealisai.com/research-blogs/tutorial-14-transformers-i-introduction/
+        sa = self.self_attn(x)
+        '''
+        x = sa + x
+        x = self.layer_norm1(x)
+        x = sa + self.linear(x)
+        x = self.layer_norm2(x)
+        return x
+        '''
+        return self.layer_norm2(sa + self.linear(self.layer_norm1(x + sa)))
+
+class TransformerModel(nn.Module):
+    def __init__(self, n_in, D_qk, latent_dim, dropout_p = 0.0, bias = False, use_pe = False, normalize_input = False):
+        super().__init__()
+        self.n_in = n_in
+        self.layer1 = TransformerLayer(n_in, n_in, D_qk, n_in, bias = bias)
+        # self.layer2 = TransformerLayer(n_in, n_in, D_qk, n_in, bias = bias)
+        self.dropout1 = nn.Dropout(dropout_p)
+        self.dropout2 = nn.Dropout(dropout_p)
+        self.output = nn.Linear(n_in, latent_dim, bias = False)
+        self.c = nn.Parameter(torch.randn(latent_dim),requires_grad = False)
+        self.normalize_input = normalize_input
+        # self.use_pe = nn.Parameter(torch.tensor(use_pe), requires_grad = False)
+        self.use_pe = use_pe
+        if use_pe:
+            self.pe = PositionalEncoding(n_in, dropout_p, 700)
+        else:
+            self.pe = None
+        
+        
+    def phi(self, x):
+        
+        if self.normalize_input:
+            x = F.layer_norm(x,(self.n_in,))
+        if self.use_pe:
+            x = self.pe(x)
+        return self.output(self.dropout1(self.layer1(x)))
+        # return self.output(self.dropout2(self.layer2(self.dropout1(self.layer1(x)))))
+
+    def forward(self, x):
+        y = self.phi(x)
+        return torch.linalg.vector_norm(y - self.c,dim = -1)
+
 
     
 def show_input_gradients_for_output(X, model, device):
