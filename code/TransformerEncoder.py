@@ -61,7 +61,7 @@ class AttentionModule(nn.Module):
         self.dq_sqrt_inv = np.sqrt(float(D_qk))
         
     def self_attention(self, x):
-        return F.softmax(self.dq_sqrt_inv * self.phi_q(x) @ self.phi_k(x).T, dim = 0)
+        return F.softmax(self.dq_sqrt_inv * self.phi_q(x) @ self.phi_k(x).T, dim = -1)
     
     def forward(self,x):
         return self.self_attention(x) @ (self.phi_v(x))
