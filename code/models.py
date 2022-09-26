@@ -7,59 +7,22 @@ import numpy as np
 import math
 from tqdm import tqdm
 
+# NOTE!
+# In the original paper, $c$ is kept fixed and all layers are bias-free becauase there is a trivial solution, (c=0 or c=b)
+# The standard TransformerEncoderLayer uses biases by default and it is not possible to disable them
+# Use TransformerEncder.py instead. It is much simpler, but bias free model. 
 
-class PositionalEncoding(nn.Module):
-
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
-        super().__init__()
-        self.dropout = nn.Dropout(p=dropout)
-
-        position = torch.arange(max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-        pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term)
-        pe[:, 0, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe)
-        self.layer_norm = nn.LayerNorm(d_model)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: Tensor, shape [seq_len, batch_size, embedding_dim]
-        """
-        '''
-        if x.min() < 0.0:
-            x -= x.min() # (-inf,inf) -> (0,inf)
-        x /= x.max() # (0,inf) -> (0,1)
-        x = (x - 0.5) * 2 # (0,1) -> (-1,1)
-        '''
-        
-        '''
-        x = x[:,0,:]
-        x -= x.min(axis=-1,keepdims = True)[0]
-        x /= x.max(axis=-1,keepdims = True)[0]
-        x = (x-0.5) * 2
-        x = x.unsqueeze(1)
-        x = x + self.pe[:x.size(0)]
-        '''
-        
-        # x = torch.cat((x,self.pe[:x.size(0)]),-1)
-        x = x + self.layer_norm(self.pe[:x.size(0)])
-        return self.dropout(x)
-
-    
-    
 class TransformerModelTorch(nn.Module):
-    def __init__(self, n_in, latent_dim, nhead = 1, dropout_p = 0.0, max_len = 600):
+    def __init__(self, n_in, latent_dim, nhead = 1, dropout_p = 0.0):
         super(TransformerModelTorch, self).__init__()
+       
         self.layer1 = nn.TransformerEncoderLayer(d_model = n_in, nhead = nhead, dim_feedforward = n_in, dropout = dropout_p)
         self.layer2 = nn.TransformerEncoderLayer(d_model = n_in, nhead = nhead, dim_feedforward = n_in, dropout = dropout_p)
         self.dropout1 = nn.Dropout(dropout_p)
         self.dropout2 = nn.Dropout(dropout_p)
         self.output = nn.Linear(n_in,latent_dim)
-        # self.pe = PositionalEncoding(n_in, dropout = dropout_p, max_len = max_len)
-        # self.c = nn.Parameter(torch.randn(latent_dim), requires_grad = True) # 2022/08/20 fix -> this shouldn't be updatable parameter, because otherwise, the biases of transformer mutually converge to c = b 
-        self.c = torch.randn(latent_dim, requires_grad = False) # 2022/08/20 fix -> this shouldn't be updatable parameter, because otherwise, the biases of transformer mutually converge to c = b 
+        self.c = nn.Parameter(torch.randn(latent_dim), requires_grad = True) # 2022/08/20 fix -> this shouldn't be updatable parameter, because otherwise, the biases of transformer mutually converge to c = b 
+        # self.c = torch.randn(latent_dim, requires_grad = False) # 2022/08/20 fix -> this shouldn't be updatable parameter, because otherwise, the biases of transformer mutually converge to c = b 
         
     
     def hidden_fro_norm(self):
