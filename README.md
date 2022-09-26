@@ -20,11 +20,18 @@ The files are compressed into pickles with gzip package with 8-bit float preciss
 Two issues shown in the paper. 
 
 ### SASE1 undulator server crashed after an unusual selection of colours for individual cells (2022-03-07 20:45:00)
-
-![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/undulator.png)
+#### model14
+![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/model14/undulator.png)
 [zip](public_data/undulator.zip).
 ### A phase shifter at SASE3 does not move (2022-04-25 21:23:42)
-![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/phase_shifter.png)
+![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/model14/phase_shifter.png)
+[zip](public_data/phase_shifter.zip)
+
+#### model25
+![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/model25/undulator.png)
+[zip](public_data/undulator.zip).
+### A phase shifter at SASE3 does not move (2022-04-25 21:23:42)
+![image](https://raw.githubusercontent.com/sulcantonin/BPM_IPAC22/bc8be7f2adfa2267333bc138d6728f29d1eaf8e2/public_data/model25/phase_shifter.png)
 [zip](public_data/phase_shifter.zip)
 
 # Model
